@@ -3,6 +3,10 @@ flags:
     network-uri: true
 packages:
 - '.'
+- location:
+    git: https://github.com/hexresearch/hoauth2.git
+    commit: 'v0.5.9-classy-access-token'
+  extra-dep: true
 resolver: lts-8.23
 extra-deps:
 - load-env-0.1.1

@@ -17,6 +17,8 @@ module Yesod.Auth.OAuth2
     , YesodOAuth2Exception(..)
     , maybeExtra
     , module Network.OAuth.OAuth2
+-- * Reexports
+    , AccessTokenLike
     ) where
 
 #if __GLASGOW_HASKELL__ < 710
@@ -37,6 +39,7 @@ import Network.OAuth.OAuth2
 import System.Random
 import Yesod.Auth
 import Yesod.Core
+import Network.OAuth.OAuth2.HttpClient (AccessTokenLike)
 
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.ByteString.Char8 as C8
@@ -54,10 +57,10 @@ oauth2Url name = PluginR name ["forward"]
 --
 -- Presents a generic @"Login via name"@ link
 --
-authOAuth2 :: YesodAuth m
+authOAuth2 :: (YesodAuth m, AccessTokenLike a, FromJSON a)
            => Text   -- ^ Service name
            -> OAuth2 -- ^ Service details
-           -> (Manager -> AccessToken -> IO (Creds m))
+           -> (Manager -> a -> IO (Creds m))
            -- ^ This function defines how to take an @'AccessToken'@ and
            --   retrieve additional information about the user, to be
            --   set in the session as @'Creds'@. Usually this means a
@@ -72,11 +75,11 @@ authOAuth2 name = authOAuth2Widget [whamlet|Login via #{name}|] name
 -- Allows passing a custom widget for the login link. See @'oauth2Eve'@ for an
 -- example.
 --
-authOAuth2Widget :: YesodAuth m
+authOAuth2Widget :: (YesodAuth m, AccessTokenLike a, FromJSON a)
                  => WidgetT m IO ()
                  -> Text
                  -> OAuth2
-                 -> (Manager -> AccessToken -> IO (Creds m))
+                 -> (Manager -> a -> IO (Creds m))
                  -> AuthPlugin m
 authOAuth2Widget widget name oauth getCreds = AuthPlugin name dispatch login
 
@@ -130,7 +133,7 @@ authOAuth2Widget widget name oauth getCreds = AuthPlugin name dispatch login
 --
 -- Throws @'InvalidProfileResponse'@ if JSON parsing fails
 --
-fromProfileURL :: FromJSON a
+fromProfileURL :: (FromJSON a)
                => Text           -- ^ Plugin name
                -> URI            -- ^ Profile URI
                -> (a -> Creds m) -- ^ Conversion to Creds
